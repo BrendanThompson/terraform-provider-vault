@@ -99,7 +99,8 @@ func azureSecretBackendRoleCreate(d *schema.ResourceData, meta interface{}) erro
 		// Statically assigning as thats how it is done in the api client
 		CredentialType: 0,
 		AzureRoles: *azureRoles,
-		ApplicationID: ,
+		// Commenting out this as not required at this stage
+		//ApplicationID: ,
 		ApplicationObjectID: applicationObjectID,
 		TTL: ttl,
 		MaxTTL: maxTtl,
