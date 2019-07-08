@@ -107,6 +107,9 @@ func azureSecretBackendRoleCreate(d *schema.ResourceData, meta interface{}) erro
 	}
 
 	_, err := client.Logical().Write(backend+"/roles/"+name, data)
+	if err != nil {
+		return fmt.Errorf("error creating role %q for backend %q: %s", name, backend, err)
+	}
 
 	d.SetId(backend + "/roles/" + name)
 	return azureSecretBackendRoleRead(d, meta)
