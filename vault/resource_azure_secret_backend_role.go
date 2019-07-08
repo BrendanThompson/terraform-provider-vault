@@ -16,12 +16,18 @@ func azureSecretBackendRoleResource() *schema.Resource {
 			State: schema.ImportStatePassthrough,
 		},
 		Schema: map[string]*schema.Schema{
-			"role_name": {
+			"name": {
 				Type: schema.TypeString,
 				Required: true,
 				ForceNew: true,
-				Description: "The name of the Vault role."
+				Description: "Unique name for the role."
 			},
+			"backend": {
+				Type: schema.TypeString,
+				Required: true,
+				ForceNew: true,
+				Description: "The path of the Azure Secret Backend the role belongs to."
+			}
 			"azure_roles": {
 				Type: schema.TypeList,
 				Required: true,
@@ -64,7 +70,45 @@ func azureSecretBackendRoleResource() *schema.Resource {
 }
 
 func azureSecretBackendRoleCreate(d *schema.ResourceData, meta interface{}) error {
+	client := meta.(*api.Client)
 
+	backend := d.Get("backend").(string)
+	name := d.Get("name").(string)
+	applicationObjectID := d.Get("application_object_id").(string)
+	ttl := d.Get("ttl").(string)
+	maxTtl := d.Get("max_ttl").(string)
+
+	azureRoles, err := expandAzureRoles(d.Get("azure_roles").([]interface{}))
+	if err != nil {
+		return fmt.Errorf("Failed to exapand azure roles: %s", err)
+	}
+
+	if applicationObjectID != "" {
+		data["application_object_id"] = applicationObjectID
+	}
+
+	if ttl != "" {
+		data["ttl"] = ttl
+	}
+
+	if maxTtl != "" {
+		data["max_ttl"] = maxTtl
+	}
+
+	data := path_roles.Role{
+		// Statically assigning as thats how it is done in the api client
+		CredentialType: 0,
+		AzureRoles: *azureRoles,
+		ApplicationID: ,
+		ApplicationObjectID: applicationObjectID,
+		TTL: ttl,
+		MaxTTL: maxTtl,
+	}
+
+	_, err := client.Logical().Write(backend+"/roles/"+name, data)
+
+	d.SetId(backend + "/roles/" + name)
+	return azureSecretBackendRoleRead(d, meta)
 }
 
 func azureSecretBackendRoleRead(d *schema.ResourceData, meta interface{}) error {
