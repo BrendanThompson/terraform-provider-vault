@@ -2,6 +2,7 @@ package vault
 
 import (
 	"github.com/hashicorp/terraform/helper/schema"
+	"github.com/hashicorp/vault-plugin-secrets-azure"
 )
 
 func azureSecretBackendRoleResource() *schema.Resource {
@@ -80,4 +81,40 @@ func azureSecretBackendRoleDelete(d *schema.ResourceData, meta interface{}) erro
 
 func azureSecretBackendRoleExists(d *schema.ResourceData, meta interface{}) (bool, error) {
 
+}
+
+func flattenAzureRoles(in []path_roles.azureRole, d *schema.ResourceData) ([]interface{}, error) {
+	att := make(map[string]interface{})
+
+	if in.RoleName != nil {
+		att["role_name"] = *in.RoleName
+	}
+
+	if in.RoleID != nil {
+		att["role_id"] = *in.RoleID
+	}
+
+	att["scope"] = in.Scope
+
+	if err != nil {
+		return nil, err
+	}
+
+	return []interface{}{att}, nil
+}
+
+func expandAzureRoles(azureRole []interface{}) (*path_roles.azureRole, error) {
+	obj := &path_roles.azureRole{}
+
+	if len(azureRole) == 0 || azureRole[0] == nil {
+		return obj, nil
+	}
+
+	in := azureRole[0].(map[string]interface{})
+
+	obj.RoleName = in["role_name"]
+	obj.RoleID = in["role_id"]
+	obj.Scope = in["scope"]
+
+	return obj, nil
 }
