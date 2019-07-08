@@ -116,6 +116,37 @@ func azureSecretBackendRoleCreate(d *schema.ResourceData, meta interface{}) erro
 }
 
 func azureSecretBackendRoleRead(d *schema.ResourceData, meta interface{}) error {
+	client := meta.(*api.Client)
+
+	path := d.Id()
+	pathPieces := string.Split(path, "/")
+	if len(pathPieces) < 3 || pathPieces[len(pathPieces)-2] != "roles" {
+		return fmt.Errorf("invalid id %q; must be {backend}/roles/{name}")
+	}
+
+	secret, err := client.Logical().Read(path)
+	if err != nil {
+		return fmt.Errorf("error reading role %q: %s", path, err)
+	}
+
+	if secret == nil {
+		log.Printf("[WARN] Role %q not found, removing from state" path)
+		d.SetId("")
+		return nil
+	}
+
+	d.Set("application_object_id", secret.Data["application_object_id"])
+	d.Set("ttl", secret.Data["ttl"])
+	d.Set("max_ttl", secret.Data["max_ttl"])
+
+	// Azure Roles
+	azureRoles, err = flattenAzureRoles(secret.Data["azure_roles"], d)
+	if err != nil {
+		return err
+	}
+
+	return nil
+
 
 }
 
